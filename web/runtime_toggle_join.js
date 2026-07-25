@@ -4,6 +4,9 @@ import { api } from "../../scripts/api.js";
 const TARGET_NODE = "StringJoinTools_RuntimeToggleJoin10";
 const LIVE_ROUTE = "/string_join_tools/runtime_state";
 const FALLBACK_BYPASS_COLOR = "#7f3fbf";
+const INPUT_ROW_LEFT_SAFE_ZONE = 60;
+const INPUT_ROW_RIGHT_SAFE_ZONE = 45;
+const INPUT_ROW_CLICK_MOVE_TOLERANCE = 5;
 
 function widgetByName(node, name) {
     return node.widgets?.find((widget) => widget.name === name);
@@ -65,7 +68,72 @@ function inputSlotY(node, slotIndex) {
     return (slotIndex + 0.7) * slotHeight;
 }
 
-function drawDisabledInputRows(node, ctx) {
+function localPointerPosition(node, event, pos) {
+    try {
+        const graphPosition = app.canvas?.convertEventToCanvasOffset?.(event);
+        if (graphPosition) {
+            return [
+                graphPosition[0] - Number(node.pos?.[0] ?? 0),
+                graphPosition[1] - Number(node.pos?.[1] ?? 0),
+            ];
+        }
+    } catch {
+        // Fall back to the position supplied by LiteGraph.
+    }
+
+    if (!pos) return null;
+    const candidates = [
+        pos,
+        [
+            pos[0] - Number(node.pos?.[0] ?? 0),
+            pos[1] - Number(node.pos?.[1] ?? 0),
+        ],
+    ];
+    return (
+        candidates.find(
+            ([x, y]) =>
+                x >= 0 &&
+                y >= 0 &&
+                x <= Number(node.size?.[0] ?? 0) &&
+                y <= Number(node.size?.[1] ?? 0),
+        ) ?? null
+    );
+}
+
+function inputRowAt(node, localPosition) {
+    if (!localPosition || node.flags?.collapsed) return null;
+
+    const [x, y] = localPosition;
+    const width = Number(node.size?.[0] ?? 0);
+    if (
+        x < INPUT_ROW_LEFT_SAFE_ZONE ||
+        x > width - INPUT_ROW_RIGHT_SAFE_ZONE
+    ) {
+        return null;
+    }
+
+    const rowHeight = Math.max(
+        18,
+        Number(globalThis.LiteGraph?.NODE_SLOT_HEIGHT ?? 20),
+    );
+    for (const slot of inputSlots(node)) {
+        if (Math.abs(y - inputSlotY(node, slot.slotIndex)) <= rowHeight / 2) {
+            return slot;
+        }
+    }
+    return null;
+}
+
+function setHoveredInputRow(node, inputIndex) {
+    const next = Number.isInteger(inputIndex) ? inputIndex : -1;
+    if (node.__stringJoinToolsHoveredInput === next) return;
+    node.__stringJoinToolsHoveredInput = next;
+    node.setDirtyCanvas?.(true, false);
+    node.graph?.setDirtyCanvas?.(true, false);
+    app.canvas?.setDirty?.(true, false);
+}
+
+function drawInputRows(node, ctx) {
     if (node.flags?.collapsed) return;
 
     const state = readState(node);
@@ -83,6 +151,28 @@ function drawDisabledInputRows(node, ctx) {
         if ((state.enabledMask & (1 << inputIndex)) !== 0) continue;
         const y = inputSlotY(node, slotIndex);
         ctx.fillRect(1, y - rowHeight / 2, width, rowHeight);
+    }
+
+    const hoveredSlot = inputSlots(node).find(
+        ({ inputIndex }) =>
+            inputIndex === node.__stringJoinToolsHoveredInput,
+    );
+    if (hoveredSlot) {
+        const y = inputSlotY(node, hoveredSlot.slotIndex);
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = 0.1;
+        ctx.fillRect(
+            INPUT_ROW_LEFT_SAFE_ZONE,
+            y - rowHeight / 2,
+            Math.max(
+                0,
+                width -
+                    INPUT_ROW_LEFT_SAFE_ZONE -
+                    INPUT_ROW_RIGHT_SAFE_ZONE +
+                    1,
+            ),
+            rowHeight,
+        );
     }
 
     ctx.restore();
@@ -421,8 +511,85 @@ app.registerExtension({
         const originalOnDrawBackground = nodeType.prototype.onDrawBackground;
         nodeType.prototype.onDrawBackground = function (ctx) {
             const result = originalOnDrawBackground?.apply(this, arguments);
-            drawDisabledInputRows(this, ctx);
+            drawInputRows(this, ctx);
             return result;
+        };
+
+        const originalOnMouseDown = nodeType.prototype.onMouseDown;
+        nodeType.prototype.onMouseDown = function (event, pos) {
+            if (event?.button === 0) {
+                this.__stringJoinToolsPendingRowClick = null;
+                const localPosition = localPointerPosition(this, event, pos);
+                const slot = inputRowAt(this, localPosition);
+                if (slot) {
+                    this.__stringJoinToolsPendingRowClick = {
+                        inputIndex: slot.inputIndex,
+                        startX: localPosition[0],
+                        startY: localPosition[1],
+                    };
+                    event.preventDefault?.();
+                    event.stopPropagation?.();
+                    return true;
+                }
+            }
+            return originalOnMouseDown?.apply(this, arguments) ?? false;
+        };
+
+        const originalOnMouseMove = nodeType.prototype.onMouseMove;
+        nodeType.prototype.onMouseMove = function (event, pos) {
+            const localPosition = localPointerPosition(this, event, pos);
+            const hoveredSlot = inputRowAt(this, localPosition);
+            setHoveredInputRow(this, hoveredSlot?.inputIndex);
+
+            const pending = this.__stringJoinToolsPendingRowClick;
+            if (pending && localPosition) {
+                const movement = Math.hypot(
+                    localPosition[0] - pending.startX,
+                    localPosition[1] - pending.startY,
+                );
+                if (movement > INPUT_ROW_CLICK_MOVE_TOLERANCE) {
+                    pending.cancelled = true;
+                }
+            }
+
+            return originalOnMouseMove?.apply(this, arguments) ?? false;
+        };
+
+        const originalOnMouseLeave = nodeType.prototype.onMouseLeave;
+        nodeType.prototype.onMouseLeave = function () {
+            setHoveredInputRow(this, -1);
+            return originalOnMouseLeave?.apply(this, arguments);
+        };
+
+        const originalOnMouseUp = nodeType.prototype.onMouseUp;
+        nodeType.prototype.onMouseUp = function (event, pos) {
+            const pending = this.__stringJoinToolsPendingRowClick;
+            this.__stringJoinToolsPendingRowClick = null;
+
+            if (pending && event?.button === 0) {
+                const localPosition = localPointerPosition(this, event, pos);
+                const releasedSlot = inputRowAt(this, localPosition);
+                const movement = localPosition
+                    ? Math.hypot(
+                          localPosition[0] - pending.startX,
+                          localPosition[1] - pending.startY,
+                      )
+                    : Number.POSITIVE_INFINITY;
+
+                event.preventDefault?.();
+                event.stopPropagation?.();
+
+                if (
+                    !pending.cancelled &&
+                    movement <= INPUT_ROW_CLICK_MOVE_TOLERANCE &&
+                    releasedSlot?.inputIndex === pending.inputIndex
+                ) {
+                    toggleInput(this, pending.inputIndex);
+                }
+                return true;
+            }
+
+            return originalOnMouseUp?.apply(this, arguments) ?? false;
         };
     },
 });

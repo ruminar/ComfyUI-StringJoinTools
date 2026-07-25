@@ -26,6 +26,12 @@
 13. Turn an input OFF and confirm its complete `text_n` row is filled in bypass purple
 14. Turn it ON again and confirm the purple row fill disappears
 15. Save and reopen the workflow and confirm the purple rows match the restored toggles
+16. Hover the clickable part of an ON and OFF row and confirm it becomes slightly brighter
+17. Left-click the center of a row beyond both socket safety zones and confirm it toggles
+18. Click or drag within 60 px of the input side or 45 px of the output side and confirm the row does not toggle
+19. Drag by more than 5 px within a row and confirm it does not toggle
+20. Right-click a row and confirm the normal ComfyUI context operation is preserved
+21. Confirm the ten lower toggle buttons still work
 
 ## Failure fallback
 
