@@ -3,6 +3,7 @@ import { api } from "../../scripts/api.js";
 
 const TARGET_NODE = "StringJoinTools_RuntimeToggleJoin10";
 const LIVE_ROUTE = "/string_join_tools/runtime_state";
+const FALLBACK_BYPASS_COLOR = "#7f3fbf";
 
 function widgetByName(node, name) {
     return node.widgets?.find((widget) => widget.name === name);
@@ -24,14 +25,67 @@ function randomStateKey() {
         .slice(2)}`;
 }
 
-function inputIndexes(node) {
+function inputSlots(node) {
     return (node.inputs ?? [])
-        .map((input) => {
+        .map((input, slotIndex) => {
             const match = /^text_(\d+)$/.exec(input.name ?? "");
-            return match ? Number(match[1]) - 1 : null;
+            return match
+                ? {
+                      inputIndex: Number(match[1]) - 1,
+                      slotIndex,
+                  }
+                : null;
         })
-        .filter((index) => Number.isInteger(index))
-        .sort((a, b) => a - b);
+        .filter((slot) => Number.isInteger(slot?.inputIndex))
+        .sort((a, b) => a.inputIndex - b.inputIndex);
+}
+
+function inputIndexes(node) {
+    return inputSlots(node).map((slot) => slot.inputIndex);
+}
+
+function bypassColor() {
+    const liteGraph = globalThis.LiteGraph;
+    return (
+        liteGraph?.NODE_MODES_COLORS?.[liteGraph.BYPASS] ??
+        FALLBACK_BYPASS_COLOR
+    );
+}
+
+function inputSlotY(node, slotIndex) {
+    if (typeof node.getConnectionPos === "function") {
+        const position = [0, 0];
+        const returned = node.getConnectionPos(true, slotIndex, position);
+        const canvasPosition = Array.isArray(returned) ? returned : position;
+        const y = Number(canvasPosition[1]) - Number(node.pos?.[1] ?? 0);
+        if (Number.isFinite(y)) return y;
+    }
+
+    const slotHeight = Number(globalThis.LiteGraph?.NODE_SLOT_HEIGHT ?? 20);
+    return (slotIndex + 0.7) * slotHeight;
+}
+
+function drawDisabledInputRows(node, ctx) {
+    if (node.flags?.collapsed) return;
+
+    const state = readState(node);
+    const rowHeight = Math.max(
+        18,
+        Number(globalThis.LiteGraph?.NODE_SLOT_HEIGHT ?? 20),
+    );
+    const width = Math.max(0, Number(node.size?.[0] ?? 0) - 2);
+
+    ctx.save();
+    ctx.fillStyle = bypassColor();
+    ctx.globalAlpha = 0.58;
+
+    for (const { inputIndex, slotIndex } of inputSlots(node)) {
+        if ((state.enabledMask & (1 << inputIndex)) !== 0) continue;
+        const y = inputSlotY(node, slotIndex);
+        ctx.fillRect(1, y - rowHeight / 2, width, rowHeight);
+    }
+
+    ctx.restore();
 }
 
 function readState(node) {
@@ -361,6 +415,13 @@ app.registerExtension({
         nodeType.prototype.onConfigure = function (info) {
             const result = originalOnConfigure?.apply(this, arguments);
             setTimeout(() => initialiseRuntimeNode(this, "workflow loaded"), 0);
+            return result;
+        };
+
+        const originalOnDrawBackground = nodeType.prototype.onDrawBackground;
+        nodeType.prototype.onDrawBackground = function (ctx) {
+            const result = originalOnDrawBackground?.apply(this, arguments);
+            drawDisabledInputRows(this, ctx);
             return result;
         };
     },

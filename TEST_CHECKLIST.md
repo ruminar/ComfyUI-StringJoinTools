@@ -23,6 +23,9 @@
 10. Save, close, reopen, and confirm mode and toggles are restored
 11. Queue PromptRandomChoice outputs and confirm random values still reach the join
 12. Connect the same output to CLIP and JPEG comment, then confirm they match
+13. Turn an input OFF and confirm its complete `text_n` row is filled in bypass purple
+14. Turn it ON again and confirm the purple row fill disappears
+15. Save and reopen the workflow and confirm the purple rows match the restored toggles
 
 ## Failure fallback
 
