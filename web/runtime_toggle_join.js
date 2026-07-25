@@ -516,20 +516,59 @@ app.registerExtension({
         };
 
         const originalOnMouseDown = nodeType.prototype.onMouseDown;
-        nodeType.prototype.onMouseDown = function (event, pos) {
+        nodeType.prototype.onMouseDown = function (event, pos, graphCanvas) {
             if (event?.button === 0) {
-                this.__stringJoinToolsPendingRowClick = null;
                 const localPosition = localPointerPosition(this, event, pos);
                 const slot = inputRowAt(this, localPosition);
-                if (slot) {
-                    this.__stringJoinToolsPendingRowClick = {
-                        inputIndex: slot.inputIndex,
-                        startX: localPosition[0],
-                        startY: localPosition[1],
+                const pointer = graphCanvas?.pointer;
+                if (slot && pointer) {
+                    const node = this;
+                    const inputIndex = slot.inputIndex;
+                    const startClientX = Number(event.clientX);
+                    const startClientY = Number(event.clientY);
+                    const originalPointerClick = pointer.onClick;
+
+                    pointer.onClick = (upEvent) => {
+                        originalPointerClick?.(upEvent);
+
+                        const releasedPosition = localPointerPosition(
+                            node,
+                            upEvent,
+                            null,
+                        );
+                        const releasedSlot = inputRowAt(
+                            node,
+                            releasedPosition,
+                        );
+                        const hasScreenCoordinates =
+                            Number.isFinite(startClientX) &&
+                            Number.isFinite(startClientY) &&
+                            Number.isFinite(Number(upEvent?.clientX)) &&
+                            Number.isFinite(Number(upEvent?.clientY));
+                        const movement = hasScreenCoordinates
+                            ? Math.hypot(
+                                  Number(upEvent.clientX) - startClientX,
+                                  Number(upEvent.clientY) - startClientY,
+                              )
+                            : releasedPosition
+                              ? Math.hypot(
+                                    releasedPosition[0] - localPosition[0],
+                                    releasedPosition[1] - localPosition[1],
+                                )
+                              : Number.POSITIVE_INFINITY;
+
+                        if (
+                            movement <= INPUT_ROW_CLICK_MOVE_TOLERANCE &&
+                            releasedSlot?.inputIndex === inputIndex
+                        ) {
+                            toggleInput(node, inputIndex);
+                        }
                     };
-                    event.preventDefault?.();
-                    event.stopPropagation?.();
-                    return true;
+
+                    // Returning a falsy value is intentional. ComfyUI then keeps
+                    // pointer.onClick and invokes it for a true click, while drag
+                    // gestures follow its normal node-drag path.
+                    return false;
                 }
             }
             return originalOnMouseDown?.apply(this, arguments) ?? false;
@@ -540,18 +579,6 @@ app.registerExtension({
             const localPosition = localPointerPosition(this, event, pos);
             const hoveredSlot = inputRowAt(this, localPosition);
             setHoveredInputRow(this, hoveredSlot?.inputIndex);
-
-            const pending = this.__stringJoinToolsPendingRowClick;
-            if (pending && localPosition) {
-                const movement = Math.hypot(
-                    localPosition[0] - pending.startX,
-                    localPosition[1] - pending.startY,
-                );
-                if (movement > INPUT_ROW_CLICK_MOVE_TOLERANCE) {
-                    pending.cancelled = true;
-                }
-            }
-
             return originalOnMouseMove?.apply(this, arguments) ?? false;
         };
 
@@ -559,37 +586,6 @@ app.registerExtension({
         nodeType.prototype.onMouseLeave = function () {
             setHoveredInputRow(this, -1);
             return originalOnMouseLeave?.apply(this, arguments);
-        };
-
-        const originalOnMouseUp = nodeType.prototype.onMouseUp;
-        nodeType.prototype.onMouseUp = function (event, pos) {
-            const pending = this.__stringJoinToolsPendingRowClick;
-            this.__stringJoinToolsPendingRowClick = null;
-
-            if (pending && event?.button === 0) {
-                const localPosition = localPointerPosition(this, event, pos);
-                const releasedSlot = inputRowAt(this, localPosition);
-                const movement = localPosition
-                    ? Math.hypot(
-                          localPosition[0] - pending.startX,
-                          localPosition[1] - pending.startY,
-                      )
-                    : Number.POSITIVE_INFINITY;
-
-                event.preventDefault?.();
-                event.stopPropagation?.();
-
-                if (
-                    !pending.cancelled &&
-                    movement <= INPUT_ROW_CLICK_MOVE_TOLERANCE &&
-                    releasedSlot?.inputIndex === pending.inputIndex
-                ) {
-                    toggleInput(this, pending.inputIndex);
-                }
-                return true;
-            }
-
-            return originalOnMouseUp?.apply(this, arguments) ?? false;
         };
     },
 });
