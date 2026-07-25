@@ -1,0 +1,16 @@
+[project]
+name = "string-join-tools"
+version = "0.1.0"
+description = "ComfyUI nodes for optional and runtime-toggle string joining, letting you change which prompt fragments are included while jobs are already queued."
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/ruminar/ComfyUI-StringJoinTools"
+
+[tool.comfy]
+PublisherId = "ruminar"
+DisplayName = "String Join Tools"
+Icon = "https://raw.githubusercontent.com/ruminar/ComfyUI-StringJoinTools/main/icon.png"
