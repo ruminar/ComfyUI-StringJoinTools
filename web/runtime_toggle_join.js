@@ -483,10 +483,6 @@ function buildRuntimeControls(node) {
 
     ensureStateKey(node);
     renderControls(node);
-
-    const width = Math.max(node.size?.[0] ?? 0, 360);
-    const height = Math.max(node.size?.[1] ?? 0, node.computeSize?.()[1] ?? 0);
-    node.setSize?.([width, height]);
 }
 
 function initialiseRuntimeNode(node, reason) {

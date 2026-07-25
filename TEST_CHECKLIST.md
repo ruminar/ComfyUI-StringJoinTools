@@ -36,6 +36,13 @@
 19. Drag by more than 5 px within a row and confirm it does not toggle
 20. Right-click a row and confirm the normal ComfyUI context operation is preserved
 21. Confirm the ten lower toggle buttons still work
+22. Resize the node smaller, switch workflow tabs, and confirm its size is preserved
+23. Save and reload the workflow and confirm the custom node size is preserved
+
+## String Output
+
+1. Resize the node smaller, switch workflow tabs, and confirm its size is preserved
+2. Save and reload the workflow and confirm its size is preserved
 
 ## Failure fallback
 
