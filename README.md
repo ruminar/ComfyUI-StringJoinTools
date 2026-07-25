@@ -12,6 +12,9 @@ Focused STRING join and inspection nodes for ComfyUI.
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Runtime Toggle String Join (2)
+- Runtime Toggle String Join (3)
+- Runtime Toggle String Join (5)
 - Runtime Toggle String Join (10)
 - String Output
 
@@ -27,9 +30,10 @@ Focused STRING join and inspection nodes for ComfyUI.
 
 For more inputs, connect join nodes in stages.
 
-## Runtime Toggle String Join (10)
+## Runtime Toggle String Join
 
-This node is intended for long, pre-queued generation runs.
+These nodes are available with 2, 3, 5, or 10 inputs and are intended for long,
+pre-queued generation runs.
 
 Queued upstream nodes still produce their STRING values normally. This includes
 runtime outputs from nodes such as PromptRandomChoice. When the join node executes,
@@ -95,8 +99,3 @@ Extract the folder into:
 Restart ComfyUI and refresh the browser.
 
 No additional Python packages are required.
-
-## Version
-
-- Release: 0.1.0
-- Internal build: v1b

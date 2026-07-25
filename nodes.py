@@ -256,6 +256,18 @@ class _RuntimeToggleStringJoinBase:
         return (safe_separator.join(parts),)
 
 
+class RuntimeToggleStringJoin2(_RuntimeToggleStringJoinBase):
+    INPUT_COUNT = 2
+
+
+class RuntimeToggleStringJoin3(_RuntimeToggleStringJoinBase):
+    INPUT_COUNT = 3
+
+
+class RuntimeToggleStringJoin5(_RuntimeToggleStringJoinBase):
+    INPUT_COUNT = 5
+
+
 class RuntimeToggleStringJoin10(_RuntimeToggleStringJoinBase):
     INPUT_COUNT = 10
 
@@ -297,6 +309,9 @@ NODE_CLASS_MAPPINGS = {
     "StringJoinTools_OptionalJoin3": OptionalStringJoin3,
     "StringJoinTools_OptionalJoin5": OptionalStringJoin5,
     "StringJoinTools_OptionalJoin10": OptionalStringJoin10,
+    "StringJoinTools_RuntimeToggleJoin2": RuntimeToggleStringJoin2,
+    "StringJoinTools_RuntimeToggleJoin3": RuntimeToggleStringJoin3,
+    "StringJoinTools_RuntimeToggleJoin5": RuntimeToggleStringJoin5,
     "StringJoinTools_RuntimeToggleJoin10": RuntimeToggleStringJoin10,
     "StringJoinTools_StringOutput": StringOutput,
 }
@@ -306,6 +321,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "StringJoinTools_OptionalJoin3": "Optional String Join (3)",
     "StringJoinTools_OptionalJoin5": "Optional String Join (5)",
     "StringJoinTools_OptionalJoin10": "Optional String Join (10)",
+    "StringJoinTools_RuntimeToggleJoin2": "Runtime Toggle String Join (2)",
+    "StringJoinTools_RuntimeToggleJoin3": "Runtime Toggle String Join (3)",
+    "StringJoinTools_RuntimeToggleJoin5": "Runtime Toggle String Join (5)",
     "StringJoinTools_RuntimeToggleJoin10": "Runtime Toggle String Join (10)",
     "StringJoinTools_StringOutput": "String Output",
 }

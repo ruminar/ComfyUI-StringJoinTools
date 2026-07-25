@@ -12,6 +12,9 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Runtime Toggle String Join (2)
+- Runtime Toggle String Join (3)
+- Runtime Toggle String Join (5)
 - Runtime Toggle String Join (10)
 - String Output
 
@@ -27,9 +30,10 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 
 入力数が足りない場合は、多段接続できます。
 
-## Runtime Toggle String Join (10)
+## Runtime Toggle String Join
 
 大量の生成ジョブを先にキューへ積む運用を想定したノードです。
+入力数が2、3、5、10のバリエーションがあります。
 
 上流ノードは通常どおり各ジョブの実行時にSTRINGを生成します。
 PromptRandomChoiceなどのランダム出力も、そのジョブで生成された値が
@@ -43,7 +47,7 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 
 ### 動作モード
 
-- `multiple`: 10個の入力を独立してON/OFFできます。
+- `multiple`: 各入力を独立してON/OFFできます。
 - `single`: 0個または1個だけONにできます。現在ONのボタンをもう一度
   押すと、すべてOFFになります。
 
@@ -52,7 +56,7 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 次の値はワークフローへ保存されます。
 
 - 動作モード
-- 10個のトグル状態
+- 各入力のトグル状態
 - 最後に選択した入力
 - ノード固有のstate key
 
@@ -99,8 +103,3 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 ComfyUIを再起動し、ブラウザを更新します。
 
 追加のPythonパッケージは不要です。
-
-## バージョン
-
-- リリース: 0.1.0
-- 内部ビルド: v1b

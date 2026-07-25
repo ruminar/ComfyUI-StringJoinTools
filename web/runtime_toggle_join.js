@@ -1,7 +1,12 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-const TARGET_NODE = "StringJoinTools_RuntimeToggleJoin10";
+const TARGET_NODES = new Set([
+    "StringJoinTools_RuntimeToggleJoin2",
+    "StringJoinTools_RuntimeToggleJoin3",
+    "StringJoinTools_RuntimeToggleJoin5",
+    "StringJoinTools_RuntimeToggleJoin10",
+]);
 const LIVE_ROUTE = "/string_join_tools/runtime_state";
 const FALLBACK_BYPASS_COLOR = "#7f3fbf";
 const INPUT_ROW_LEFT_SAFE_ZONE = 60;
@@ -409,7 +414,10 @@ function buildRuntimeControls(node) {
 
     const grid = document.createElement("div");
     grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(5, minmax(0, 1fr))";
+    grid.style.gridTemplateColumns = `repeat(${Math.min(
+        indexes.length,
+        5,
+    )}, minmax(0, 1fr))`;
     grid.style.gap = "4px";
 
     const buttons = indexes.map((index) => {
@@ -492,7 +500,7 @@ app.registerExtension({
     name: "ruminar.StringJoinTools.RuntimeToggleJoin",
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== TARGET_NODE) return;
+        if (!TARGET_NODES.has(nodeData.name)) return;
 
         const originalOnNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {

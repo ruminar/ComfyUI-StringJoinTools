@@ -2,6 +2,9 @@ from nodes import (
     OptionalStringJoin3,
     OptionalStringJoin5,
     OptionalStringJoin10,
+    RuntimeToggleStringJoin2,
+    RuntimeToggleStringJoin3,
+    RuntimeToggleStringJoin5,
     RuntimeToggleStringJoin10,
     StringOutput,
 )
@@ -42,6 +45,53 @@ def test_runtime_fallback_multiple():
         text_3="CCC",
     )
     assert result == ("AAA,CCC",)
+
+
+def test_runtime_variants_have_expected_inputs_and_masks():
+    variants = (
+        (RuntimeToggleStringJoin2, 2),
+        (RuntimeToggleStringJoin3, 3),
+        (RuntimeToggleStringJoin5, 5),
+        (RuntimeToggleStringJoin10, 10),
+    )
+
+    for node_class, input_count in variants:
+        input_types = node_class.INPUT_TYPES()
+        assert list(input_types["optional"]) == [
+            f"text_{index}" for index in range(1, input_count + 1)
+        ]
+        assert input_types["required"]["enabled_mask"][1]["max"] == (
+            1 << input_count
+        ) - 1
+        assert input_types["required"]["selected_index"][1]["max"] == (
+            input_count - 1
+        )
+
+
+def test_runtime_variants_join_their_last_input():
+    variants = (
+        (RuntimeToggleStringJoin2, 2),
+        (RuntimeToggleStringJoin3, 3),
+        (RuntimeToggleStringJoin5, 5),
+        (RuntimeToggleStringJoin10, 10),
+    )
+
+    for node_class, input_count in variants:
+        key = f"variant-{input_count}"
+        RUNTIME_STATE_STORE.clear(key)
+        result = node_class().join_strings(
+            separator="|",
+            mode="multiple",
+            enabled_mask=1 << (input_count - 1),
+            selected_index=input_count - 1,
+            state_key=key,
+            unique_id=str(input_count),
+            **{
+                f"text_{index}": f"value-{index}"
+                for index in range(1, input_count + 1)
+            },
+        )
+        assert result == (f"value-{input_count}",)
 
 
 def test_runtime_live_state_overrides_queued_fallback():
