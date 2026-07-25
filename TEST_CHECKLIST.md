@@ -8,6 +8,10 @@
 4. Upstream source Bypass -> missing input is ignored
 5. Whitespace-only input -> preserved
 6. Embedded line breaks -> preserved
+7. Separator `\n` -> LF between joined strings
+8. Separator `\r\n` -> CRLF between joined strings
+9. Separator `\t` -> tab between joined strings
+10. Separator `\\n` -> literal `\n` between joined strings
 
 ## Runtime Toggle String Join
 

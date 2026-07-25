@@ -17,6 +17,32 @@ def _valid_non_empty_strings(values: list[Any]) -> list[str]:
     return [value for value in values if isinstance(value, str) and value != ""]
 
 
+def decode_separator(value: str) -> str:
+    """Decode only the separator escape sequences supported by this package."""
+    if not isinstance(value, str):
+        return ""
+
+    decoded: list[str] = []
+    index = 0
+    while index < len(value):
+        if value.startswith("\\r\\n", index):
+            decoded.append("\r\n")
+            index += 4
+        elif value.startswith("\\n", index):
+            decoded.append("\n")
+            index += 2
+        elif value.startswith("\\t", index):
+            decoded.append("\t")
+            index += 2
+        elif value.startswith("\\\\", index):
+            decoded.append("\\")
+            index += 2
+        else:
+            decoded.append(value[index])
+            index += 1
+    return "".join(decoded)
+
+
 class _OptionalStringJoinBase:
     INPUT_COUNT = 2
     RETURN_TYPES = ("STRING",)
@@ -52,7 +78,10 @@ class _OptionalStringJoinBase:
                         "default": ", ",
                         "multiline": False,
                         "dynamicPrompts": False,
-                        "tooltip": "Inserted only between usable strings.",
+                        "tooltip": (
+                            "Inserted only between usable strings. "
+                            r"Supports \n, \r\n, \t, and \\."
+                        ),
                     },
                 ),
             },
@@ -65,7 +94,7 @@ class _OptionalStringJoinBase:
             for index in range(1, self.INPUT_COUNT + 1)
         ]
         parts = _valid_non_empty_strings(values)
-        safe_separator = separator if isinstance(separator, str) else ""
+        safe_separator = decode_separator(separator)
         return (safe_separator.join(parts),)
 
 
@@ -120,6 +149,7 @@ class _RuntimeToggleStringJoinBase:
                         "default": ", ",
                         "multiline": False,
                         "dynamicPrompts": False,
+                        "tooltip": r"Supports \n, \r\n, \t, and \\.",
                     },
                 ),
                 "mode": (
@@ -206,14 +236,16 @@ class _RuntimeToggleStringJoinBase:
         )
         key = cls._resolve_state_key(state_key, unique_id)
         live_state = RUNTIME_STATE_STORE.get(key)
+        decoded_separator = decode_separator(separator)
         if live_state is not None:
             return (
                 f"{key}|live|{live_state.revision}|{live_state.mode}|"
-                f"{live_state.enabled_mask}|{live_state.selected_index}"
+                f"{live_state.enabled_mask}|{live_state.selected_index}|"
+                f"{decoded_separator!r}"
             )
         return (
             f"{key}|fallback|{mode}|{fallback_mask}|"
-            f"{int(selected_index)}|{separator}"
+            f"{int(selected_index)}|{decoded_separator!r}"
         )
 
     def join_strings(
@@ -252,7 +284,7 @@ class _RuntimeToggleStringJoinBase:
             if active_mask & (1 << index)
         ]
         parts = _valid_non_empty_strings(values)
-        safe_separator = separator if isinstance(separator, str) else ""
+        safe_separator = decode_separator(separator)
         return (safe_separator.join(parts),)
 
 

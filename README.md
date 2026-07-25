@@ -30,6 +30,21 @@ Focused STRING join and inspection nodes for ComfyUI.
 
 For more inputs, connect join nodes in stages.
 
+## Separator escapes
+
+All Optional and Runtime Toggle variants support these limited separator escape
+sequences:
+
+| Input | Actual separator |
+| --- | --- |
+| `\n` | Line feed (LF) |
+| `\r\n` | Windows newline (CRLF) |
+| `\t` | Tab |
+| `\\` | One backslash |
+| `\\n` | The literal characters `\n` |
+
+Unsupported sequences such as `\u` and `\x` are preserved literally.
+
 ## Runtime Toggle String Join
 
 These nodes are available with 2, 3, 5, or 10 inputs and are intended for long,

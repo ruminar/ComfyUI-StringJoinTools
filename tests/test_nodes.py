@@ -1,4 +1,5 @@
 from nodes import (
+    OptionalStringJoin2,
     OptionalStringJoin3,
     OptionalStringJoin5,
     OptionalStringJoin10,
@@ -7,6 +8,7 @@ from nodes import (
     RuntimeToggleStringJoin5,
     RuntimeToggleStringJoin10,
     StringOutput,
+    decode_separator,
 )
 from runtime_state import RuntimeStateStore, RUNTIME_STATE_STORE
 
@@ -32,6 +34,31 @@ def test_optional_join_preserves_whitespace_and_newlines():
     ) == (" |A\nB",)
 
 
+def test_separator_escape_sequences_are_safely_decoded():
+    assert decode_separator(r"\n") == "\n"
+    assert decode_separator(r"\r\n") == "\r\n"
+    assert decode_separator(r"\t") == "\t"
+    assert decode_separator(r"\\") == "\\"
+    assert decode_separator(r"\\n") == r"\n"
+    assert decode_separator(r"\u3042") == r"\u3042"
+    assert decode_separator(r"\x41") == r"\x41"
+
+
+def test_optional_variants_use_decoded_separators():
+    variants = (
+        OptionalStringJoin2,
+        OptionalStringJoin3,
+        OptionalStringJoin5,
+        OptionalStringJoin10,
+    )
+    for node_class in variants:
+        assert node_class().join_strings(
+            r"\n",
+            text_1="AAA",
+            text_2="BBB",
+        ) == ("AAA\nBBB",)
+
+
 def test_runtime_fallback_multiple():
     result = RuntimeToggleStringJoin10().join_strings(
         separator=",",
@@ -45,6 +72,49 @@ def test_runtime_fallback_multiple():
         text_3="CCC",
     )
     assert result == ("AAA,CCC",)
+
+
+def test_runtime_variants_use_decoded_separators():
+    variants = (
+        RuntimeToggleStringJoin2,
+        RuntimeToggleStringJoin3,
+        RuntimeToggleStringJoin5,
+        RuntimeToggleStringJoin10,
+    )
+    for node_class in variants:
+        key = f"escaped-separator-{node_class.INPUT_COUNT}"
+        RUNTIME_STATE_STORE.clear(key)
+        assert node_class().join_strings(
+            separator=r"\t",
+            mode="multiple",
+            enabled_mask=3,
+            selected_index=1,
+            state_key=key,
+            text_1="AAA",
+            text_2="BBB",
+        ) == ("AAA\tBBB",)
+
+
+def test_runtime_cache_token_includes_decoded_separator():
+    key = "separator-cache-token"
+    RUNTIME_STATE_STORE.clear(key)
+    RUNTIME_STATE_STORE.update(
+        state_key=key,
+        mode="multiple",
+        enabled_mask=3,
+        selected_index=1,
+        input_count=2,
+    )
+    newline_token = RuntimeToggleStringJoin2.IS_CHANGED(
+        separator=r"\n",
+        state_key=key,
+    )
+    tab_token = RuntimeToggleStringJoin2.IS_CHANGED(
+        separator=r"\t",
+        state_key=key,
+    )
+    assert newline_token != tab_token
+    RUNTIME_STATE_STORE.clear(key)
 
 
 def test_runtime_variants_have_expected_inputs_and_masks():
