@@ -1,0 +1,11 @@
+[project]
+name = "comfyui-string-join-tools"
+version = "0.1.0"
+description = "Optional and runtime-toggle STRING join nodes for ComfyUI."
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.comfy]
+PublisherId = "ruminar"
+DisplayName = "ComfyUI String Join Tools"
+Icon = ""
