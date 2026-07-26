@@ -65,6 +65,8 @@ to unattended batch generation after the desired prompt composition is chosen.
 
 The status area displays `QUEUE SNAPSHOT`.
 
+<img width="540" height="598" alt="image" src="https://github.com/user-attachments/assets/8bfb37e7-c2f2-4cf4-91d7-d26ff40071ca" />
+
 ## Runtime Toggle String Join
 
 These nodes are available with 2, 3, 5, or 10 inputs and are intended for long,
@@ -78,7 +80,7 @@ only the currently enabled non-empty strings.
 This allows LoRA, seed, character, and other job-specific settings to be queued in
 advance while the prompt composition can still be changed during generation.
 
-<img width="575" height="657" alt="image" src="https://github.com/user-attachments/assets/a12cdcab-d352-4549-b537-54f68188c523" />
+<img width="561" height="617" alt="image" src="https://github.com/user-attachments/assets/f9a37b43-5af4-444c-95fe-f63d6615e15a" />
 
 ### Modes
 
