@@ -12,6 +12,10 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Toggle String Join (2)
+- Toggle String Join (3)
+- Toggle String Join (5)
+- Toggle String Join (10)
 - Runtime Toggle String Join (2)
 - Runtime Toggle String Join (3)
 - Runtime Toggle String Join (5)
@@ -34,7 +38,7 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 
 ## 区切り文字のエスケープ
 
-Optional版とRuntime Toggle版のすべてで、区切り文字に次の限定された
+Optional版、Toggle版、Runtime Toggle版のすべてで、区切り文字に次の限定された
 エスケープ記法を使用できます。
 
 | 入力 | 実際の区切り文字 |
@@ -46,6 +50,23 @@ Optional版とRuntime Toggle版のすべてで、区切り文字に次の限定�
 | `\\n` | 文字としての `\n` |
 
 `\u`や`\x`など、表にない記法は変換せずそのまま保持します。
+
+## Toggle String Join
+
+入力数が2、3、5、10のバリエーションがあります。
+
+接続した入力をボタンまたは入力行の左クリックでON/OFFできます。
+選択状態と動作モードはキュー投入時に確定し、その後に画面上で変更しても
+すでにキューへ積まれたジョブには影響しません。
+
+大量のジョブを同じ構成で投入し、生成中は操作せずに運用したい場合に適しています。
+
+### 動作モード
+
+- `multiple`: 各入力を独立してON/OFFできます。
+- `single`: 0個または1個だけONにできます。
+
+ノード下部には`QUEUE SNAPSHOT`と表示されます。
 
 ## Runtime Toggle String Join
 
@@ -69,6 +90,8 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 - `multiple`: 各入力を独立してON/OFFできます。
 - `single`: 0個または1個だけONにできます。現在ONのボタンをもう一度
   押すと、すべてOFFになります。
+
+Runtime版は背景が薄いアンバー色で表示され、ノード下部には`LIVE`と表示されます。
 
 ### 保存状態とライブ状態
 

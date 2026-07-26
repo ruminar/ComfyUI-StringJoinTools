@@ -13,9 +13,20 @@
 9. Separator `\t` -> tab between joined strings
 10. Separator `\\n` -> literal `\n` between joined strings
 
+## Toggle String Join
+
+1. Confirm the node has no live-sync revision or state key
+2. Set several input toggles, queue jobs, then change the toggles
+3. Confirm queued jobs retain the toggle state captured when queued
+4. Confirm `multiple` and `single` modes match the Runtime variants
+5. Confirm OFF rows are purple and row clicking works
+6. Confirm the status reads `QUEUE SNAPSHOT`
+7. Confirm the node uses the normal ComfyUI background
+8. Save and reload the workflow and confirm mode, toggles, and size are restored
+
 ## Runtime Toggle String Join
 
-1. Load workflow and confirm a synced revision is shown
+1. Load workflow and confirm `LIVE` and a synced revision are shown
 2. Queue several jobs with all toggles ON
 3. During generation, turn one input OFF
 4. Confirm the next image onward omits that input
@@ -38,6 +49,8 @@
 21. Confirm the ten lower toggle buttons still work
 22. Resize the node smaller, switch workflow tabs, and confirm its size is preserved
 23. Save and reload the workflow and confirm the custom node size is preserved
+24. Confirm Runtime variants have a subtle amber background tint
+25. Confirm Toggle variants do not receive or alter the amber tint
 
 ## String Output
 

@@ -1,8 +1,8 @@
 # Release Notes
 
-## 0.1.0
+## 0.1.1
 
-ComfyUI向け文字列結合カスタムノード「String Join Tools」の初回リリースです。
+ComfyUI向け文字列結合カスタムノード「String Join Tools」の0.1.1リリースです。
 
 ### 収録ノード
 
@@ -10,6 +10,10 @@ ComfyUI向け文字列結合カスタムノード「String Join Tools」の初�
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Toggle String Join (2)
+- Toggle String Join (3)
+- Toggle String Join (5)
+- Toggle String Join (10)
 - Runtime Toggle String Join (2)
 - Runtime Toggle String Join (3)
 - Runtime Toggle String Join (5)
@@ -25,6 +29,16 @@ ComfyUI向け文字列結合カスタムノード「String Join Tools」の初�
 - 有効な文字列同士の間にだけ区切り文字を挿入
 - すべての入力が未接続または空文字列の場合は空文字列を出力
 
+### Toggle String Join
+
+- 入力数2、3、5、10のバリエーション
+- ボタンおよび入力行の左クリックによるON/OFF
+- `multiple`および`single`モード
+- トグル状態とモードをキュー投入時に固定
+- キュー投入後の画面操作は、投入済みジョブへ影響しない
+- OFF入力行をBypass風の紫色で表示
+- `QUEUE SNAPSHOT`ステータス表示
+
 ### Runtime Toggle String Join
 
 - キュー投入後でも、Join実行時の最新状態で各入力をON/OFF
@@ -35,12 +49,14 @@ ComfyUI向け文字列結合カスタムノード「String Join Tools」の初�
 - OFF入力行をBypass風の紫色で表示
 - クリック可能領域のホバー表示
 - 入力・出力ソケット周辺の安全領域とドラッグ誤操作防止
+- Runtime版を識別する薄いアンバー背景と`LIVE`ステータス表示
 - ワークフロー保存値を使った安全なフォールバック
 - ライブ状態のrevisionを利用したキャッシュ無効化
 
 ### 区切り文字
 
-全Optional版およびRuntime Toggle版で、次の限定的なエスケープ記法に対応します。
+全Optional版、Toggle版およびRuntime Toggle版で、次の限定的な
+エスケープ記法に対応します。
 
 | 入力 | 実際の区切り文字 |
 | --- | --- |

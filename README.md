@@ -12,6 +12,10 @@ Focused STRING join and inspection nodes for ComfyUI.
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Toggle String Join (2)
+- Toggle String Join (3)
+- Toggle String Join (5)
+- Toggle String Join (10)
 - Runtime Toggle String Join (2)
 - Runtime Toggle String Join (3)
 - Runtime Toggle String Join (5)
@@ -34,8 +38,8 @@ For more inputs, connect join nodes in stages.
 
 ## Separator escapes
 
-All Optional and Runtime Toggle variants support these limited separator escape
-sequences:
+All Optional, Toggle, and Runtime Toggle variants support these limited
+separator escape sequences:
 
 | Input | Actual separator |
 | --- | --- |
@@ -46,6 +50,20 @@ sequences:
 | `\\n` | The literal characters `\n` |
 
 Unsupported sequences such as `\u` and `\x` are preserved literally.
+
+## Toggle String Join
+
+These nodes are available with 2, 3, 5, or 10 inputs. Connected inputs can be
+enabled or disabled using the buttons or by left-clicking their input rows.
+
+The toggle state and mode are captured when the prompt is queued. Later UI
+changes do not affect jobs already waiting in the queue. This variant is suited
+to unattended batch generation after the desired prompt composition is chosen.
+
+- `multiple`: Every input toggle is independent.
+- `single`: Zero or one input can be enabled.
+
+The status area displays `QUEUE SNAPSHOT`.
 
 ## Runtime Toggle String Join
 
@@ -67,6 +85,9 @@ advance while the prompt composition can still be changed during generation.
 - `multiple`: Every input toggle is independent.
 - `single`: Zero or one input can be enabled. Clicking the active input turns all
   inputs off.
+
+Runtime variants use a subtle amber background tint and display `LIVE` in their
+status area.
 
 ### Saved and live state
 

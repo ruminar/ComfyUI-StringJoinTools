@@ -288,6 +288,88 @@ class _RuntimeToggleStringJoinBase:
         return (safe_separator.join(parts),)
 
 
+class _ToggleStringJoinBase(_RuntimeToggleStringJoinBase):
+    """Queue-snapshot toggle join that never reads server-side live state."""
+
+    DESCRIPTION = (
+        "Joins the non-empty STRING inputs enabled when the prompt is queued. "
+        "Later toggle changes do not affect already queued jobs."
+    )
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        input_types = super().INPUT_TYPES()
+        input_types["required"].pop("state_key", None)
+        input_types.pop("hidden", None)
+        for input_definition in input_types["optional"].values():
+            input_definition[1]["tooltip"] = (
+                "Optional queued STRING input. Whether it is included is captured "
+                "when the prompt is queued."
+            )
+        return input_types
+
+    @classmethod
+    def IS_CHANGED(
+        cls,
+        separator=", ",
+        mode="multiple",
+        enabled_mask=None,
+        selected_index=0,
+        **kwargs,
+    ):
+        fallback_mask = (
+            (1 << cls.INPUT_COUNT) - 1
+            if enabled_mask is None
+            else int(enabled_mask)
+        )
+        active_mode, active_mask, active_selected = cls._normalise_fallback_state(
+            mode=mode,
+            enabled_mask=fallback_mask,
+            selected_index=selected_index,
+        )
+        return (
+            f"queued|{active_mode}|{active_mask}|{active_selected}|"
+            f"{decode_separator(separator)!r}"
+        )
+
+    def join_strings(
+        self,
+        separator: str,
+        mode: str,
+        enabled_mask: int,
+        selected_index: int,
+        **kwargs: Any,
+    ):
+        _, active_mask, _ = self._normalise_fallback_state(
+            mode=mode,
+            enabled_mask=enabled_mask,
+            selected_index=selected_index,
+        )
+        values = [
+            kwargs.get(f"text_{index + 1}")
+            for index in range(self.INPUT_COUNT)
+            if active_mask & (1 << index)
+        ]
+        parts = _valid_non_empty_strings(values)
+        return (decode_separator(separator).join(parts),)
+
+
+class ToggleStringJoin2(_ToggleStringJoinBase):
+    INPUT_COUNT = 2
+
+
+class ToggleStringJoin3(_ToggleStringJoinBase):
+    INPUT_COUNT = 3
+
+
+class ToggleStringJoin5(_ToggleStringJoinBase):
+    INPUT_COUNT = 5
+
+
+class ToggleStringJoin10(_ToggleStringJoinBase):
+    INPUT_COUNT = 10
+
+
 class RuntimeToggleStringJoin2(_RuntimeToggleStringJoinBase):
     INPUT_COUNT = 2
 
@@ -341,6 +423,10 @@ NODE_CLASS_MAPPINGS = {
     "StringJoinTools_OptionalJoin3": OptionalStringJoin3,
     "StringJoinTools_OptionalJoin5": OptionalStringJoin5,
     "StringJoinTools_OptionalJoin10": OptionalStringJoin10,
+    "StringJoinTools_ToggleJoin2": ToggleStringJoin2,
+    "StringJoinTools_ToggleJoin3": ToggleStringJoin3,
+    "StringJoinTools_ToggleJoin5": ToggleStringJoin5,
+    "StringJoinTools_ToggleJoin10": ToggleStringJoin10,
     "StringJoinTools_RuntimeToggleJoin2": RuntimeToggleStringJoin2,
     "StringJoinTools_RuntimeToggleJoin3": RuntimeToggleStringJoin3,
     "StringJoinTools_RuntimeToggleJoin5": RuntimeToggleStringJoin5,
@@ -353,6 +439,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "StringJoinTools_OptionalJoin3": "Optional String Join (3)",
     "StringJoinTools_OptionalJoin5": "Optional String Join (5)",
     "StringJoinTools_OptionalJoin10": "Optional String Join (10)",
+    "StringJoinTools_ToggleJoin2": "Toggle String Join (2)",
+    "StringJoinTools_ToggleJoin3": "Toggle String Join (3)",
+    "StringJoinTools_ToggleJoin5": "Toggle String Join (5)",
+    "StringJoinTools_ToggleJoin10": "Toggle String Join (10)",
     "StringJoinTools_RuntimeToggleJoin2": "Runtime Toggle String Join (2)",
     "StringJoinTools_RuntimeToggleJoin3": "Runtime Toggle String Join (3)",
     "StringJoinTools_RuntimeToggleJoin5": "Runtime Toggle String Join (5)",

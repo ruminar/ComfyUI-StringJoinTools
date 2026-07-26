@@ -3,6 +3,10 @@ from nodes import (
     OptionalStringJoin3,
     OptionalStringJoin5,
     OptionalStringJoin10,
+    ToggleStringJoin2,
+    ToggleStringJoin3,
+    ToggleStringJoin5,
+    ToggleStringJoin10,
     RuntimeToggleStringJoin2,
     RuntimeToggleStringJoin3,
     RuntimeToggleStringJoin5,
@@ -72,6 +76,69 @@ def test_runtime_fallback_multiple():
         text_3="CCC",
     )
     assert result == ("AAA,CCC",)
+
+
+def test_toggle_variants_capture_settings_without_live_state_inputs():
+    variants = (
+        (ToggleStringJoin2, 2),
+        (ToggleStringJoin3, 3),
+        (ToggleStringJoin5, 5),
+        (ToggleStringJoin10, 10),
+    )
+
+    for node_class, input_count in variants:
+        input_types = node_class.INPUT_TYPES()
+        assert "state_key" not in input_types["required"]
+        assert "hidden" not in input_types
+        assert list(input_types["optional"]) == [
+            f"text_{index}" for index in range(1, input_count + 1)
+        ]
+
+
+def test_toggle_variants_use_queued_mask_and_mode():
+    variants = (
+        ToggleStringJoin2,
+        ToggleStringJoin3,
+        ToggleStringJoin5,
+        ToggleStringJoin10,
+    )
+
+    for node_class in variants:
+        result = node_class().join_strings(
+            separator=r"\n",
+            mode="multiple",
+            enabled_mask=1 << 1,
+            selected_index=1,
+            text_1="AAA",
+            text_2="BBB",
+        )
+        assert result == ("BBB",)
+
+        result = node_class().join_strings(
+            separator=",",
+            mode="single",
+            enabled_mask=(1 << 0) | (1 << 1),
+            selected_index=0,
+            text_1="AAA",
+            text_2="BBB",
+        )
+        assert result == ("AAA",)
+
+
+def test_toggle_cache_token_tracks_queued_settings():
+    enabled_token = ToggleStringJoin2.IS_CHANGED(
+        separator=r"\n",
+        mode="multiple",
+        enabled_mask=1,
+        selected_index=0,
+    )
+    disabled_token = ToggleStringJoin2.IS_CHANGED(
+        separator=r"\n",
+        mode="multiple",
+        enabled_mask=0,
+        selected_index=-1,
+    )
+    assert enabled_token != disabled_token
 
 
 def test_runtime_variants_use_decoded_separators():
