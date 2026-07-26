@@ -30,6 +30,8 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 
 入力数が足りない場合は、多段接続できます。
 
+<img width="582" height="466" alt="image" src="https://github.com/user-attachments/assets/791980b1-8f51-49f0-ab20-06468d887cac" />
+
 ## 区切り文字のエスケープ
 
 Optional版とRuntime Toggle版のすべてで、区切り文字に次の限定された
@@ -59,6 +61,8 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 
 これにより、LoRA、Seed、キャラクターなどのジョブ固有設定を先に
 大量投入しながら、生成途中でプロンプト構成だけを変更できます。
+
+<img width="575" height="657" alt="image" src="https://github.com/user-attachments/assets/a12cdcab-d352-4549-b537-54f68188c523" />
 
 ### 動作モード
 
@@ -109,6 +113,8 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 受け取った文字列、空文字列であること、文字数をノード内に表示します。
 同じSTRINGをそのまま出力するため、処理途中へ挟んで確認できます。
 
+<img width="356" height="270" alt="image" src="https://github.com/user-attachments/assets/8afa3b1a-3dfe-4a96-8791-b67c7d6fe3f1" />
+
 ## インストール
 
 フォルダを次の場所へ展開してください。
@@ -118,3 +124,8 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 ComfyUIを再起動し、ブラウザを更新します。
 
 追加のPythonパッケージは不要です。
+<br/><br/><br/>
+
+## 宣伝画像
+
+<img width="1086" height="1448" alt="image" src="https://github.com/user-attachments/assets/71fd6415-259a-426e-9089-6965cb02aa89" />
