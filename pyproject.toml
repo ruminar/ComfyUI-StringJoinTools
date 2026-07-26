@@ -1,6 +1,6 @@
 [project]
 name = "string-join-tools"
-version = "0.1.0"
+version = "0.1.1"
 description = "ComfyUI nodes for optional and runtime-toggle string joining, letting you change which prompt fragments are included while jobs are already queued."
 license = { file = "LICENSE" }
 readme = "README.md"
