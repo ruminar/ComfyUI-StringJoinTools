@@ -61,6 +61,8 @@ Optional版、Toggle版、Runtime Toggle版のすべてで、区切り文字に�
 
 大量のジョブを同じ構成で投入し、生成中は操作せずに運用したい場合に適しています。
 
+<img width="540" height="598" alt="image" src="https://github.com/user-attachments/assets/8bfb37e7-c2f2-4cf4-91d7-d26ff40071ca" />
+
 ### 動作モード
 
 - `multiple`: 各入力を独立してON/OFFできます。
@@ -83,7 +85,7 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 これにより、LoRA、Seed、キャラクターなどのジョブ固有設定を先に
 大量投入しながら、生成途中でプロンプト構成だけを変更できます。
 
-<img width="575" height="657" alt="image" src="https://github.com/user-attachments/assets/a12cdcab-d352-4549-b537-54f68188c523" />
+<img width="561" height="617" alt="image" src="https://github.com/user-attachments/assets/f9a37b43-5af4-444c-95fe-f63d6615e15a" />
 
 ### 動作モード
 
