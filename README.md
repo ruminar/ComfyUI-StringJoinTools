@@ -30,6 +30,8 @@ Focused STRING join and inspection nodes for ComfyUI.
 
 For more inputs, connect join nodes in stages.
 
+<img width="582" height="466" alt="image" src="https://github.com/user-attachments/assets/791980b1-8f51-49f0-ab20-06468d887cac" />
+
 ## Separator escapes
 
 All Optional and Runtime Toggle variants support these limited separator escape
@@ -57,6 +59,8 @@ only the currently enabled non-empty strings.
 
 This allows LoRA, seed, character, and other job-specific settings to be queued in
 advance while the prompt composition can still be changed during generation.
+
+<img width="575" height="657" alt="image" src="https://github.com/user-attachments/assets/a12cdcab-d352-4549-b537-54f68188c523" />
 
 ### Modes
 
@@ -104,6 +108,9 @@ tab for controlling a given workflow.
 
 Displays the received text, explicit empty-string status, and character count.
 The same STRING is returned unchanged.
+
+<img width="356" height="270" alt="image" src="https://github.com/user-attachments/assets/8afa3b1a-3dfe-4a96-8791-b67c7d6fe3f1" />
+
 
 ## Installation
 
