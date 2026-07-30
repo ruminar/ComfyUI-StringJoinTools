@@ -3,14 +3,22 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from .runtime_state import RUNTIME_STATE_STORE, VALID_MODES
+    from .runtime_state import (
+        RUNTIME_STATE_STORE,
+        RUNTIME_TEXT_STATE_STORE,
+        VALID_MODES,
+    )
 except ImportError:
-    from runtime_state import RUNTIME_STATE_STORE, VALID_MODES
+    from runtime_state import (
+        RUNTIME_STATE_STORE,
+        RUNTIME_TEXT_STATE_STORE,
+        VALID_MODES,
+    )
 
 
 CATEGORY = "String Join Tools"
-VERSION = "0.1.0"
-BUILD = "v1b"
+VERSION = "0.2.0"
+BUILD = "v2"
 
 
 def _valid_non_empty_strings(values: list[Any]) -> list[str]:
@@ -386,6 +394,62 @@ class RuntimeToggleStringJoin10(_RuntimeToggleStringJoinBase):
     INPUT_COUNT = 10
 
 
+class RuntimeTextInput:
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "get_text"
+    CATEGORY = CATEGORY
+    DESCRIPTION = (
+        "Returns the latest server-accepted live text at execution time. "
+        "The text captured when queued is used only while no live state exists."
+    )
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "multiline": True,
+                        "dynamicPrompts": False,
+                    },
+                ),
+                "state_key": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "multiline": False,
+                        "dynamicPrompts": False,
+                    },
+                ),
+            },
+            "hidden": {"unique_id": "UNIQUE_ID"},
+        }
+
+    @staticmethod
+    def _resolve_state_key(state_key: str, unique_id: Any) -> str:
+        key = state_key.strip() if isinstance(state_key, str) else ""
+        return key or f"string-join-tools-runtime-text-{unique_id}"
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        # A constant token would let prompt caching freeze the value seen when the
+        # queue was submitted. NaN deliberately makes every queued job execute.
+        return float("NaN")
+
+    def get_text(self, text: str = "", state_key: str = "", unique_id=None):
+        key = self._resolve_state_key(state_key, unique_id)
+        try:
+            live_state = RUNTIME_TEXT_STATE_STORE.get(key)
+        except Exception:
+            live_state = None
+        if live_state is not None:
+            return (live_state.text,)
+        return (text if isinstance(text, str) else "",)
+
+
 class StringOutput:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
@@ -431,6 +495,7 @@ NODE_CLASS_MAPPINGS = {
     "StringJoinTools_RuntimeToggleJoin3": RuntimeToggleStringJoin3,
     "StringJoinTools_RuntimeToggleJoin5": RuntimeToggleStringJoin5,
     "StringJoinTools_RuntimeToggleJoin10": RuntimeToggleStringJoin10,
+    "StringJoinTools_RuntimeTextInput": RuntimeTextInput,
     "StringJoinTools_StringOutput": StringOutput,
 }
 
@@ -447,5 +512,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "StringJoinTools_RuntimeToggleJoin3": "Runtime Toggle String Join (3)",
     "StringJoinTools_RuntimeToggleJoin5": "Runtime Toggle String Join (5)",
     "StringJoinTools_RuntimeToggleJoin10": "Runtime Toggle String Join (10)",
+    "StringJoinTools_RuntimeTextInput": "Runtime Text Input",
     "StringJoinTools_StringOutput": "String Output",
 }

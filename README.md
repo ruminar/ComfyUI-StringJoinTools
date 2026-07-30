@@ -20,6 +20,7 @@ Focused STRING join and inspection nodes for ComfyUI.
 - Runtime Toggle String Join (3)
 - Runtime Toggle String Join (5)
 - Runtime Toggle String Join (10)
+- Runtime Text Input
 - String Output
 
 ## Optional String Join
@@ -126,6 +127,36 @@ the JPEG comment/metadata input of the saver to preserve the exact prompt used.
 
 Live state is shared by `state_key` on the ComfyUI server. Use one active browser
 tab for controlling a given workflow.
+
+## Runtime Text Input
+
+This multiline STRING source can be edited after jobs have been queued. Every
+queued job executes the node and reads the latest text already accepted by the
+ComfyUI server at that moment.
+
+- `EDITING`: local input has changed and is waiting to be sent.
+- `SYNCING`: an update is being sent in order.
+- `LIVE`: the displayed text has been acknowledged by the server.
+- `SYNC ERROR`: the update was not accepted; the visible text remains available
+  for retry.
+
+Japanese IME composition is not sent midway through conversion. Input is
+preserved exactly, including empty text, leading/trailing whitespace, line
+breaks, Unicode characters, and backslashes. Character count uses Unicode code
+points.
+
+When a workflow opens, an existing server state takes priority. If no live state
+exists, the saved `text` widget value is uploaded and is also the fallback
+captured with a queued prompt. A live empty string is a real state and does not
+fall back to queued text.
+
+Deleting a node does not immediately delete its server state, so already queued
+jobs can still resolve it. Server state is in memory and is cleared when ComfyUI
+restarts. As with Runtime Toggle nodes, workflow copies that retain the same
+state key can overwrite one another if controlled simultaneously.
+
+For safer live editing, connect Runtime Text Input to Runtime Toggle String Join.
+Keep that input OFF while editing, then turn it ON when the text is ready.
 
 ## String Output
 

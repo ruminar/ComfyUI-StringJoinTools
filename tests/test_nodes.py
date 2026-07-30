@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from nodes import (
     OptionalStringJoin2,
     OptionalStringJoin3,
@@ -11,10 +15,18 @@ from nodes import (
     RuntimeToggleStringJoin3,
     RuntimeToggleStringJoin5,
     RuntimeToggleStringJoin10,
+    RuntimeTextInput,
     StringOutput,
     decode_separator,
 )
-from runtime_state import RuntimeStateStore, RUNTIME_STATE_STORE
+from runtime_state import (
+    MAX_RUNTIME_TEXT_BYTES,
+    RUNTIME_STATE_STORE,
+    RUNTIME_TEXT_STATE_STORE,
+    RuntimeStateStore,
+    RuntimeTextStateStore,
+    StaleRuntimeTextUpdate,
+)
 
 
 def test_optional_join_ignores_missing_and_empty():
@@ -342,3 +354,121 @@ def test_string_output_accepts_unconnected_text_input():
     assert result["result"] == ("",)
     assert result["ui"]["text"] == [""]
     assert result["ui"]["length"] == [0]
+
+
+def test_runtime_text_falls_back_only_when_live_state_is_missing():
+    key = "runtime-text-fallback"
+    RUNTIME_TEXT_STATE_STORE.clear(key)
+    node = RuntimeTextInput()
+
+    assert node.get_text(
+        text="  queued\ntext\\n  ",
+        state_key=key,
+        unique_id="fallback",
+    ) == ("  queued\ntext\\n  ",)
+
+    RUNTIME_TEXT_STATE_STORE.update(
+        state_key=key,
+        text="",
+        client_id="browser-a",
+        client_sequence=1,
+    )
+    assert node.get_text(
+        text="queued value",
+        state_key=key,
+        unique_id="fallback",
+    ) == ("",)
+    RUNTIME_TEXT_STATE_STORE.clear(key)
+
+
+def test_runtime_text_live_state_preserves_text_exactly():
+    key = "runtime-text-exact"
+    RUNTIME_TEXT_STATE_STORE.clear(key)
+    live_text = " 前後空白 \r\n日本語 😀 \\\\n\t"
+    RUNTIME_TEXT_STATE_STORE.update(
+        state_key=key,
+        text=live_text,
+        client_id="browser-a",
+        client_sequence=1,
+    )
+    assert RuntimeTextInput().get_text(
+        text="fallback",
+        state_key=key,
+    ) == (live_text,)
+    RUNTIME_TEXT_STATE_STORE.clear(key)
+
+
+def test_runtime_text_always_invalidates_comfy_cache():
+    assert math.isnan(RuntimeTextInput.IS_CHANGED())
+    assert math.isnan(RuntimeTextInput.IS_CHANGED(text="same"))
+
+
+def test_runtime_text_store_revisions_and_session_ordering():
+    store = RuntimeTextStateStore()
+    first = store.update(
+        state_key="ordered",
+        text="A",
+        client_id="browser-a",
+        client_sequence=1,
+    )
+    same = store.update(
+        state_key="ordered",
+        text="A",
+        client_id="browser-a",
+        client_sequence=2,
+    )
+    changed = store.update(
+        state_key="ordered",
+        text="B",
+        client_id="browser-a",
+        client_sequence=3,
+    )
+    assert first.revision == 1
+    assert same.revision == 1
+    assert changed.revision == 2
+    assert "client_id" not in changed.to_dict()
+    assert "client_sequence" not in changed.to_dict()
+
+    with pytest.raises(StaleRuntimeTextUpdate):
+        store.update(
+            state_key="ordered",
+            text="stale",
+            client_id="browser-a",
+            client_sequence=2,
+        )
+
+    reloaded = store.update(
+        state_key="ordered",
+        text="after reload",
+        client_id="browser-b",
+        client_sequence=1,
+    )
+    assert reloaded.text == "after reload"
+    assert reloaded.revision == 3
+
+
+def test_runtime_text_store_validates_type_and_utf8_size():
+    store = RuntimeTextStateStore()
+    with pytest.raises(TypeError):
+        store.update(
+            state_key="invalid",
+            text=None,
+            client_id="browser",
+            client_sequence=1,
+        )
+    with pytest.raises(ValueError):
+        store.update(
+            state_key="too-large",
+            text="あ" * (MAX_RUNTIME_TEXT_BYTES // 3 + 1),
+            client_id="browser",
+            client_sequence=1,
+        )
+
+
+def test_runtime_text_input_definition_is_multiline_and_serialized():
+    input_types = RuntimeTextInput.INPUT_TYPES()
+    assert input_types["required"]["text"][1]["multiline"] is True
+    assert input_types["required"]["text"][1]["dynamicPrompts"] is False
+    assert "state_key" in input_types["required"]
+    assert "revision" not in input_types["required"]
+    assert input_types["hidden"]["unique_id"] == "UNIQUE_ID"

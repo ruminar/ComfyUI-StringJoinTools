@@ -57,6 +57,21 @@
 1. Resize the node smaller, switch workflow tabs, and confirm its size is preserved
 2. Save and reload the workflow and confirm its size is preserved
 
+## Runtime Text Input
+
+1. Enter multiline Japanese text and confirm `EDITING` -> `SYNCING` -> `LIVE`
+2. Queue several jobs, edit the text, and confirm later executions use the latest acknowledged text
+3. Type with a Japanese IME and confirm uncommitted composition text is not sent
+4. Edit repeatedly during a slow request and confirm updates remain ordered
+5. Enter an empty string and confirm it remains live instead of falling back to queued text
+6. Confirm leading/trailing whitespace, newlines, Unicode, tabs, and backslashes are preserved exactly
+7. Save and reopen while server state exists and confirm the server text takes priority
+8. Restart ComfyUI, reopen the workflow, and confirm the saved text initializes the missing live state
+9. Break the route and confirm `SYNC ERROR`, then restore it and retry by editing or blurring
+10. Duplicate the node in one workflow and confirm the copy receives a different state key
+11. Delete the node after queuing work and confirm its server state is not immediately removed
+12. Resize the node, switch workflow tabs, and confirm its size is not forced back
+
 ## Failure fallback
 
 1. Temporarily break the live-state route
