@@ -158,6 +158,8 @@ state key can overwrite one another if controlled simultaneously.
 For safer live editing, connect Runtime Text Input to Runtime Toggle String Join.
 Keep that input OFF while editing, then turn it ON when the text is ready.
 
+<img width="461" height="281" alt="image" src="https://github.com/user-attachments/assets/6683d204-6078-461a-bb17-ac75265ea366" />
+
 ## String Output
 
 Displays the received text, explicit empty-string status, and character count.
