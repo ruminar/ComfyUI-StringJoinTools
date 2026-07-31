@@ -162,6 +162,8 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 安全にライブ編集する場合は、Runtime Text InputをRuntime Toggle String Joinへ
 接続してください。編集中はその入力をOFFにし、文章が完成したらONにします。
 
+<img width="461" height="281" alt="image" src="https://github.com/user-attachments/assets/6683d204-6078-461a-bb17-ac75265ea366" />
+
 ## String Output
 
 受け取った文字列、空文字列であること、文字数をノード内に表示します。
