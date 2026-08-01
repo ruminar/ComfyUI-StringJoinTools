@@ -1,20 +1,35 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-const TARGET_NODES = new Set([
+const RUNTIME_TARGET_NODES = new Set([
     "StringJoinTools_RuntimeToggleJoin2",
     "StringJoinTools_RuntimeToggleJoin3",
     "StringJoinTools_RuntimeToggleJoin5",
     "StringJoinTools_RuntimeToggleJoin10",
 ]);
+const QUEUED_TARGET_NODES = new Set([
+    "StringJoinTools_ToggleJoin2",
+    "StringJoinTools_ToggleJoin3",
+    "StringJoinTools_ToggleJoin5",
+    "StringJoinTools_ToggleJoin10",
+]);
+const TARGET_NODES = new Set([
+    ...RUNTIME_TARGET_NODES,
+    ...QUEUED_TARGET_NODES,
+]);
 const LIVE_ROUTE = "/string_join_tools/runtime_state";
 const FALLBACK_BYPASS_COLOR = "#7f3fbf";
+const LIVE_BACKGROUND_TINT = "rgba(255, 210, 70, 0.1)";
 const INPUT_ROW_LEFT_SAFE_ZONE = 60;
 const INPUT_ROW_RIGHT_SAFE_ZONE = 45;
 const INPUT_ROW_CLICK_MOVE_TOLERANCE = 5;
 
 function widgetByName(node, name) {
     return node.widgets?.find((widget) => widget.name === name);
+}
+
+function isRuntimeNode(node) {
+    return RUNTIME_TARGET_NODES.has(node.comfyClass ?? node.type);
 }
 
 function hideSavedWidget(widget) {
@@ -147,8 +162,16 @@ function drawInputRows(node, ctx) {
         Number(globalThis.LiteGraph?.NODE_SLOT_HEIGHT ?? 20),
     );
     const width = Math.max(0, Number(node.size?.[0] ?? 0) - 2);
+    const height = Math.max(0, Number(node.size?.[1] ?? 0));
 
     ctx.save();
+
+    if (isRuntimeNode(node)) {
+        ctx.fillStyle = LIVE_BACKGROUND_TINT;
+        ctx.globalAlpha = 1;
+        ctx.fillRect(1, 0, width, height);
+    }
+
     ctx.fillStyle = bypassColor();
     ctx.globalAlpha = 0.58;
 
@@ -284,7 +307,7 @@ function applyButtonAppearance(button, enabled, index) {
 }
 
 function renderControls(node) {
-    const ui = node.__stringJoinToolsRuntimeUI;
+    const ui = node.__stringJoinToolsToggleUI;
     if (!ui) return;
 
     const state = readState(node);
@@ -304,8 +327,15 @@ function renderControls(node) {
             : "Multiple mode · independent inputs";
 }
 
+function showQueuedSnapshotStatus(node) {
+    const ui = node.__stringJoinToolsToggleUI;
+    if (!ui) return;
+    ui.status.textContent = "QUEUE SNAPSHOT · captured when queued";
+    ui.status.style.color = "rgba(205,220,255,0.9)";
+}
+
 async function syncRuntimeState(node, reason = "update") {
-    const ui = node.__stringJoinToolsRuntimeUI;
+    const ui = node.__stringJoinToolsToggleUI;
     const stateKey = ensureStateKey(node);
     const state = readState(node);
     state.stateKey = stateKey;
@@ -314,7 +344,7 @@ async function syncRuntimeState(node, reason = "update") {
     renderControls(node);
 
     if (ui) {
-        ui.status.textContent = `Syncing live state (${reason})…`;
+        ui.status.textContent = `LIVE · syncing (${reason})…`;
         ui.status.style.color = "";
     }
 
@@ -341,15 +371,15 @@ async function syncRuntimeState(node, reason = "update") {
             const revision = payload?.state?.revision;
             ui.status.textContent =
                 revision == null
-                    ? "Live state synced"
-                    : `Live state synced · revision ${revision}`;
+                    ? "LIVE · synced"
+                    : `LIVE · synced · revision ${revision}`;
             ui.status.style.color = "rgba(165,255,195,0.9)";
         }
     } catch (error) {
         console.error("[StringJoinTools] Live state sync failed", error);
         if (ui) {
             ui.status.textContent =
-                "Live sync failed · queued saved state will be used";
+                "LIVE · sync failed · queued saved state will be used";
             ui.status.style.color = "rgba(255,170,150,0.95)";
         }
     }
@@ -382,7 +412,11 @@ function toggleInput(node, index) {
     writeStateWidgets(node, state);
     renderControls(node);
     markWorkflowChanged(node);
-    void syncRuntimeState(node, `toggle ${index + 1}`);
+    if (isRuntimeNode(node)) {
+        void syncRuntimeState(node, `toggle ${index + 1}`);
+    } else {
+        showQueuedSnapshotStatus(node);
+    }
 }
 
 function normaliseAfterModeChange(node) {
@@ -390,11 +424,15 @@ function normaliseAfterModeChange(node) {
     writeStateWidgets(node, state);
     renderControls(node);
     markWorkflowChanged(node);
-    void syncRuntimeState(node, `mode ${state.mode}`);
+    if (isRuntimeNode(node)) {
+        void syncRuntimeState(node, `mode ${state.mode}`);
+    } else {
+        showQueuedSnapshotStatus(node);
+    }
 }
 
-function buildRuntimeControls(node) {
-    if (node.__stringJoinToolsRuntimeUI) return;
+function buildToggleControls(node) {
+    if (node.__stringJoinToolsToggleUI) return;
 
     const indexes = inputIndexes(node);
     if (indexes.length === 0) return;
@@ -440,7 +478,9 @@ function buildRuntimeControls(node) {
     });
 
     const status = document.createElement("div");
-    status.textContent = "Live state not synced yet";
+    status.textContent = isRuntimeNode(node)
+        ? "LIVE · not synced yet"
+        : "QUEUE SNAPSHOT · captured when queued";
     status.style.fontSize = "10px";
     status.style.opacity = "0.78";
     status.style.padding = "0 2px";
@@ -448,8 +488,8 @@ function buildRuntimeControls(node) {
     root.append(modeLabel, grid, status);
 
     const domWidget = node.addDOMWidget(
-        "runtime_toggle_controls",
-        "string-join-tools-runtime-controls",
+        "toggle_controls",
+        "string-join-tools-toggle-controls",
         root,
         {
             serialize: false,
@@ -458,7 +498,7 @@ function buildRuntimeControls(node) {
     );
     domWidget.computeSize = (width) => [width, 72];
 
-    node.__stringJoinToolsRuntimeUI = {
+    node.__stringJoinToolsToggleUI = {
         root,
         modeLabel,
         buttons,
@@ -481,23 +521,24 @@ function buildRuntimeControls(node) {
     hideSavedWidget(widgetByName(node, "selected_index"));
     hideSavedWidget(widgetByName(node, "state_key"));
 
-    ensureStateKey(node);
+    if (isRuntimeNode(node)) ensureStateKey(node);
     renderControls(node);
-
-    const width = Math.max(node.size?.[0] ?? 0, 360);
-    const height = Math.max(node.size?.[1] ?? 0, node.computeSize?.()[1] ?? 0);
-    node.setSize?.([width, height]);
+    if (!isRuntimeNode(node)) showQueuedSnapshotStatus(node);
 }
 
-function initialiseRuntimeNode(node, reason) {
-    buildRuntimeControls(node);
-    ensureStateKey(node);
+function initialiseToggleNode(node, reason) {
+    buildToggleControls(node);
     renderControls(node);
-    void syncRuntimeState(node, reason);
+    if (isRuntimeNode(node)) {
+        ensureStateKey(node);
+        void syncRuntimeState(node, reason);
+    } else {
+        showQueuedSnapshotStatus(node);
+    }
 }
 
 app.registerExtension({
-    name: "ruminar.StringJoinTools.RuntimeToggleJoin",
+    name: "ruminar.StringJoinTools.ToggleJoin",
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if (!TARGET_NODES.has(nodeData.name)) return;
@@ -505,14 +546,14 @@ app.registerExtension({
         const originalOnNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
             const result = originalOnNodeCreated?.apply(this, arguments);
-            setTimeout(() => initialiseRuntimeNode(this, "node created"), 0);
+            setTimeout(() => initialiseToggleNode(this, "node created"), 0);
             return result;
         };
 
         const originalOnConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (info) {
             const result = originalOnConfigure?.apply(this, arguments);
-            setTimeout(() => initialiseRuntimeNode(this, "workflow loaded"), 0);
+            setTimeout(() => initialiseToggleNode(this, "workflow loaded"), 0);
             return result;
         };
 

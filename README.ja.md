@@ -12,10 +12,15 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 - Optional String Join (3)
 - Optional String Join (5)
 - Optional String Join (10)
+- Toggle String Join (2)
+- Toggle String Join (3)
+- Toggle String Join (5)
+- Toggle String Join (10)
 - Runtime Toggle String Join (2)
 - Runtime Toggle String Join (3)
 - Runtime Toggle String Join (5)
 - Runtime Toggle String Join (10)
+- Runtime Text Input
 - String Output
 
 ## Optional String Join
@@ -29,6 +34,42 @@ ComfyUI向けの、文字列結合と確認に特化したノードセットで�
 - すべての入力が未接続または空文字列なら `""` を返します。
 
 入力数が足りない場合は、多段接続できます。
+
+<img width="582" height="466" alt="image" src="https://github.com/user-attachments/assets/791980b1-8f51-49f0-ab20-06468d887cac" />
+
+## 区切り文字のエスケープ
+
+Optional版、Toggle版、Runtime Toggle版のすべてで、区切り文字に次の限定された
+エスケープ記法を使用できます。
+
+| 入力 | 実際の区切り文字 |
+| --- | --- |
+| `\n` | 改行（LF） |
+| `\r\n` | Windows形式の改行（CRLF） |
+| `\t` | タブ |
+| `\\` | バックスラッシュ1文字 |
+| `\\n` | 文字としての `\n` |
+
+`\u`や`\x`など、表にない記法は変換せずそのまま保持します。
+
+## Toggle String Join
+
+入力数が2、3、5、10のバリエーションがあります。
+
+接続した入力をボタンまたは入力行の左クリックでON/OFFできます。
+選択状態と動作モードはキュー投入時に確定し、その後に画面上で変更しても
+すでにキューへ積まれたジョブには影響しません。
+
+大量のジョブを同じ構成で投入し、生成中は操作せずに運用したい場合に適しています。
+
+<img width="540" height="598" alt="image" src="https://github.com/user-attachments/assets/8bfb37e7-c2f2-4cf4-91d7-d26ff40071ca" />
+
+### 動作モード
+
+- `multiple`: 各入力を独立してON/OFFできます。
+- `single`: 0個または1個だけONにできます。
+
+ノード下部には`QUEUE SNAPSHOT`と表示されます。
 
 ## Runtime Toggle String Join
 
@@ -45,11 +86,15 @@ Joinノードが実行される瞬間に、ComfyUIサーバー上の最新モー
 これにより、LoRA、Seed、キャラクターなどのジョブ固有設定を先に
 大量投入しながら、生成途中でプロンプト構成だけを変更できます。
 
+<img width="561" height="617" alt="image" src="https://github.com/user-attachments/assets/f9a37b43-5af4-444c-95fe-f63d6615e15a" />
+
 ### 動作モード
 
 - `multiple`: 各入力を独立してON/OFFできます。
 - `single`: 0個または1個だけONにできます。現在ONのボタンをもう一度
   押すと、すべてOFFになります。
+
+Runtime版は背景が薄いアンバー色で表示され、ノード下部には`LIVE`と表示されます。
 
 ### 保存状態とライブ状態
 
@@ -89,10 +134,42 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 同じワークフローを複数タブから同時操作すると状態が競合するため、
 操作用タブは原則1つにしてください。
 
+## Runtime Text Input
+
+複数行のSTRINGを、ジョブをキューへ投入した後でも編集できる入力ノードです。
+各ジョブではこのノードを必ず実行し、実行時点でComfyUIサーバーが受理済みの
+最新テキストを出力します。
+
+- `EDITING`: ローカルで編集中、または送信待ち
+- `SYNCING`: 更新を順番に送信中
+- `LIVE`: 表示中のテキストをサーバーが受理済み
+- `SYNC ERROR`: 更新を受理できなかった状態。表示中の内容は保持され、再送できます
+
+日本語IMEの変換途中では送信せず、変換確定後に送信します。空文字、前後の空白、
+改行、Unicode文字、バックスラッシュは変換や除去をせず、そのまま保持します。
+文字数はUnicodeコードポイント数で数えます。
+
+ワークフローを開いたとき、サーバーにライブ状態があれば、そのテキストを優先します。
+ライブ状態が存在しない場合だけ、ワークフローへ保存された`text`をサーバーへ送り、
+キュー投入時のフォールバックとしても使います。ライブ状態として受理済みの空文字は
+「状態なし」と区別されるため、キュー投入時の文字列へ戻りません。
+
+ノードを削除しても、キュー済みジョブが参照できるようサーバー状態は即時削除しません。
+状態はメモリ内にあり、ComfyUIの再起動で消えます。Runtime Toggle版と同様に、
+同じstate keyを保持したワークフロー複製を同時操作すると、後から受理された状態で
+上書きされる可能性があります。
+
+安全にライブ編集する場合は、Runtime Text InputをRuntime Toggle String Joinへ
+接続してください。編集中はその入力をOFFにし、文章が完成したらONにします。
+
+<img width="461" height="281" alt="image" src="https://github.com/user-attachments/assets/6683d204-6078-461a-bb17-ac75265ea366" />
+
 ## String Output
 
 受け取った文字列、空文字列であること、文字数をノード内に表示します。
 同じSTRINGをそのまま出力するため、処理途中へ挟んで確認できます。
+
+<img width="356" height="270" alt="image" src="https://github.com/user-attachments/assets/8afa3b1a-3dfe-4a96-8791-b67c7d6fe3f1" />
 
 ## インストール
 
@@ -103,3 +180,8 @@ CLIP Text EncodeとImageSaverのJPEGコメント入力へ分岐してくださ�
 ComfyUIを再起動し、ブラウザを更新します。
 
 追加のPythonパッケージは不要です。
+<br/><br/><br/>
+
+## 宣伝画像
+
+<img width="1086" height="1448" alt="image" src="https://github.com/user-attachments/assets/71fd6415-259a-426e-9089-6965cb02aa89" />

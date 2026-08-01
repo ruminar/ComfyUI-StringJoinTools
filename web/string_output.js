@@ -77,10 +77,6 @@ app.registerExtension({
                 widget,
             };
 
-            const width = Math.max(this.size?.[0] ?? 0, 320);
-            const height = Math.max(this.size?.[1] ?? 0, 190);
-            this.setSize?.([width, height]);
-
             return result;
         };
 

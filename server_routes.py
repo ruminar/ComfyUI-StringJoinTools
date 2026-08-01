@@ -8,9 +8,17 @@ except ImportError:
     PromptServer = None
 
 try:
-    from .runtime_state import RUNTIME_STATE_STORE
+    from .runtime_state import (
+        RUNTIME_STATE_STORE,
+        RUNTIME_TEXT_STATE_STORE,
+        StaleRuntimeTextUpdate,
+    )
 except ImportError:
-    from runtime_state import RUNTIME_STATE_STORE
+    from runtime_state import (
+        RUNTIME_STATE_STORE,
+        RUNTIME_TEXT_STATE_STORE,
+        StaleRuntimeTextUpdate,
+    )
 
 
 if PromptServer is not None and web is not None:
@@ -42,6 +50,42 @@ if PromptServer is not None and web is not None:
         if state is None:
             return web.json_response(
                 {"ok": False, "error": "Runtime state not found"},
+                status=404,
+            )
+        return web.json_response({"ok": True, "state": state.to_dict()})
+
+    @PromptServer.instance.routes.post("/string_join_tools/runtime_text_state")
+    async def update_runtime_text_state(request):
+        try:
+            data = await request.json()
+            if not isinstance(data, dict):
+                raise TypeError("request body must be a JSON object")
+            state = RUNTIME_TEXT_STATE_STORE.update(
+                state_key=data.get("state_key", ""),
+                text=data.get("text"),
+                client_id=data.get("client_id", ""),
+                client_sequence=data.get("client_sequence"),
+            )
+            return web.json_response({"ok": True, "state": state.to_dict()})
+        except StaleRuntimeTextUpdate as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=409)
+        except (TypeError, ValueError) as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
+        except Exception as exc:
+            return web.json_response(
+                {"ok": False, "error": f"Unexpected runtime text error: {exc}"},
+                status=500,
+            )
+
+    @PromptServer.instance.routes.get(
+        "/string_join_tools/runtime_text_state/{state_key}"
+    )
+    async def read_runtime_text_state(request):
+        state_key = request.match_info.get("state_key", "")
+        state = RUNTIME_TEXT_STATE_STORE.get(state_key)
+        if state is None:
+            return web.json_response(
+                {"ok": False, "error": "Runtime text state not found"},
                 status=404,
             )
         return web.json_response({"ok": True, "state": state.to_dict()})

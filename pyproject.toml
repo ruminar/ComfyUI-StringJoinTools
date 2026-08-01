@@ -1,7 +1,7 @@
 [project]
 name = "string-join-tools"
-version = "0.1.0"
-description = "ComfyUI nodes for optional and runtime-toggle string joining, letting you change which prompt fragments are included while jobs are already queued."
+version = "0.2.0"
+description = "ComfyUI prompt-switching and string-joining nodes with optional inputs, queue-fixed and runtime toggles, and live text updates without requeueing."
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"
