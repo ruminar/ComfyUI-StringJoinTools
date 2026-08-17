@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.2.1
+
+### Runtime Text Input
+
+- テキストエリア編集中の`Ctrl+S`／`Cmd+S`でブラウザのページ保存を開かず、ComfyUIのワークフロー保存を実行
+- `Ctrl+Shift+S`／`Cmd+Shift+S`はComfyUIの「Save Workflow As」を実行
+- 保存ショートカット時は保留中のライブテキスト同期も即時開始
+
 ## 0.2.0
 
 ### Runtime Text Input

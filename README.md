@@ -145,6 +145,9 @@ preserved exactly, including empty text, leading/trailing whitespace, line
 breaks, Unicode characters, and backslashes. Character count uses Unicode code
 points.
 
+While the editor is focused, `Ctrl+S` / `Cmd+S` saves the ComfyUI workflow
+instead of opening the browser's Save Page dialog. Add `Shift` to use Save As.
+
 When a workflow opens, an existing server state takes priority. If no live state
 exists, the saved `text` widget value is uploaded and is also the fallback
 captured with a queued prompt. A live empty string is a real state and does not

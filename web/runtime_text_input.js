@@ -316,11 +316,45 @@ function buildUI(node) {
         "mouseup",
         "click",
         "dblclick",
-        "keydown",
         "keyup",
     ]) {
         textarea.addEventListener(eventName, absorbEvent);
     }
+    textarea.addEventListener("keydown", (event) => {
+        const isSaveShortcut =
+            (event.ctrlKey || event.metaKey) &&
+            !event.altKey &&
+            event.key.toLowerCase() === "s";
+        if (!isSaveShortcut) {
+            event.stopPropagation();
+            return;
+        }
+
+        // A textarea is treated as an editing surface, so ComfyUI's global
+        // shortcut does not consume Ctrl/Cmd+S here. Explicitly suppress the
+        // browser's "Save page" action and invoke the matching ComfyUI command.
+        event.preventDefault();
+        event.stopPropagation();
+        scheduleSync(node, textarea.value, true);
+
+        const commandId = event.shiftKey
+            ? "Comfy.SaveWorkflowAs"
+            : "Comfy.SaveWorkflow";
+        const commandManager = app.extensionManager?.command;
+        if (typeof commandManager?.execute === "function") {
+            commandManager.execute(commandId, {
+                errorHandler: (error) =>
+                    console.error(
+                        `[StringJoinTools] ${commandId} failed`,
+                        error,
+                    ),
+            });
+        } else {
+            console.warn(
+                `[StringJoinTools] ${commandId} is unavailable in this ComfyUI frontend`,
+            );
+        }
+    });
     textarea.addEventListener("compositionstart", () => {
         node.__stringJoinToolsRuntimeTextSync.composing = true;
         setStatus(node, "EDITING");

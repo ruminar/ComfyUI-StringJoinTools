@@ -71,6 +71,8 @@
 10. Duplicate the node in one workflow and confirm the copy receives a different state key
 11. Delete the node after queuing work and confirm its server state is not immediately removed
 12. Resize the node, switch workflow tabs, and confirm its size is not forced back
+13. Focus the text editor, press `Ctrl+S` / `Cmd+S`, and confirm ComfyUI saves the workflow without opening the browser Save Page dialog
+14. Press `Ctrl+Shift+S` / `Cmd+Shift+S` and confirm ComfyUI opens Save Workflow As
 
 ## Failure fallback
 

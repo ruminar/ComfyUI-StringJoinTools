@@ -17,8 +17,8 @@ except ImportError:
 
 
 CATEGORY = "String Join Tools"
-VERSION = "0.2.0"
-BUILD = "v2"
+VERSION = "0.2.1"
+BUILD = "v2.1"
 
 
 def _valid_non_empty_strings(values: list[Any]) -> list[str]:
