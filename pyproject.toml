@@ -1,7 +1,7 @@
 [project]
 name = "string-join-tools"
 version = "0.2.1"
-description = "ComfyUI prompt-switching and string-joining nodes with optional inputs, queue-fixed and runtime toggles, and live text updates without requeueing."
+description = "ComfyUI string-joining and prompt-composition nodes for combining outputs from ComfyUI-PromptRandomChoice and other STRING sources, with optional inputs, queue-fixed/runtime toggles, and live text updates during queued generation."
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.9"
