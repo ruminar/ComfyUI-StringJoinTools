@@ -1,11 +1,19 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import {
+    registerNodes2Adapter,
+    setNodes2RuntimeTint,
+} from "./nodes2_compat.js";
 
 const TARGET_NODE = "StringJoinTools_RuntimeTextInput";
 const LIVE_ROUTE = "/string_join_tools/runtime_text_state";
 const DEBOUNCE_MS = 120;
 const MAX_TEXT_BYTES = 512 * 1024;
 const LIVE_BACKGROUND_TINT = "rgba(255, 210, 70, 0.1)";
+
+registerNodes2Adapter([TARGET_NODE], (_node, element) => {
+    setNodes2RuntimeTint(element, true);
+});
 
 function widgetByName(node, name) {
     return node.widgets?.find((widget) => widget.name === name);

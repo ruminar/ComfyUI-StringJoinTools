@@ -1,5 +1,10 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import {
+    refreshNodes2Node,
+    registerNodes2Adapter,
+    setNodes2RuntimeTint,
+} from "./nodes2_compat.js";
 
 const RUNTIME_TARGET_NODES = new Set([
     "StringJoinTools_RuntimeToggleJoin2",
@@ -33,10 +38,16 @@ function isRuntimeNode(node) {
 }
 
 function hideSavedWidget(widget) {
-    if (!widget || widget.__stringJoinToolsHidden) return;
-    widget.__stringJoinToolsHidden = true;
-    widget.computeSize = () => [0, -4];
-    widget.draw = () => {};
+    if (!widget) return;
+
+    widget.hidden = true;
+    widget.options ??= {};
+    widget.options.hidden = true;
+    if (!widget.__stringJoinToolsHidden) {
+        widget.__stringJoinToolsHidden = true;
+        widget.computeSize = () => [0, -4];
+        widget.draw = () => {};
+    }
 }
 
 function randomStateKey() {
@@ -325,7 +336,128 @@ function renderControls(node) {
         state.mode === "single"
             ? "Single mode · 0 or 1 input"
             : "Multiple mode · independent inputs";
+    refreshNodes2Node(node);
 }
+
+function bindNodes2RowClick(target) {
+    if (target.__stringJoinToolsBound) return;
+    target.__stringJoinToolsBound = true;
+
+    target.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        target.__stringJoinToolsCleanupPress?.();
+
+        const press = {
+            pointerId: event.pointerId,
+            clientX: event.clientX,
+            clientY: event.clientY,
+        };
+        const cleanup = () => {
+            window.removeEventListener("pointerup", finish, true);
+            window.removeEventListener("pointercancel", cancel, true);
+            target.__stringJoinToolsCleanupPress = null;
+        };
+        const cancel = (upEvent) => {
+            if (upEvent.pointerId !== press.pointerId) return;
+            cleanup();
+        };
+        const finish = (upEvent) => {
+            if (upEvent.pointerId !== press.pointerId) return;
+            cleanup();
+
+            const movement = Math.hypot(
+                upEvent.clientX - press.clientX,
+                upEvent.clientY - press.clientY,
+            );
+            const releasedElement = document.elementFromPoint(
+                upEvent.clientX,
+                upEvent.clientY,
+            );
+            if (
+                movement <= INPUT_ROW_CLICK_MOVE_TOLERANCE &&
+                releasedElement &&
+                target.contains(releasedElement)
+            ) {
+                toggleInput(
+                    target.__stringJoinToolsNode,
+                    target.__stringJoinToolsInputIndex,
+                );
+            }
+        };
+
+        target.__stringJoinToolsCleanupPress = cleanup;
+        window.addEventListener("pointerup", finish, true);
+        window.addEventListener("pointercancel", cancel, true);
+    });
+}
+
+function applyNodes2ToggleUI(node, element) {
+    setNodes2RuntimeTint(element, isRuntimeNode(node));
+
+    const slots = inputSlots(node);
+    const slotElements = [
+        ...element.querySelectorAll(".lg-slot--input"),
+    ].filter((slot) => !slot.closest('[data-testid="node-widgets"]'));
+    const state = readState(node);
+
+    slots.forEach(({ inputIndex }, index) => {
+        const slotElement = slotElements[index];
+        if (!slotElement) return;
+
+        slotElement.classList.add("string-join-tools-nodes2-row");
+        slotElement.style.position = "relative";
+        slotElement.style.overflow = "visible";
+
+        let visual = slotElement.querySelector(
+            ":scope > .string-join-tools-nodes2-row-visual",
+        );
+        if (!visual) {
+            visual = document.createElement("div");
+            visual.className = "string-join-tools-nodes2-row-visual";
+            Object.assign(visual.style, {
+                position: "absolute",
+                left: "0",
+                top: "0",
+                width: "var(--node-width)",
+                height: "100%",
+                zIndex: "0",
+                pointerEvents: "none",
+            });
+            slotElement.appendChild(visual);
+        }
+        visual.style.background =
+            state.enabledMask & (1 << inputIndex)
+                ? "transparent"
+                : bypassColor();
+        visual.style.opacity =
+            state.enabledMask & (1 << inputIndex) ? "0" : "0.58";
+
+        let clickTarget = slotElement.querySelector(
+            ":scope > .string-join-tools-nodes2-row-click",
+        );
+        if (!clickTarget) {
+            clickTarget = document.createElement("div");
+            clickTarget.className = "string-join-tools-nodes2-row-click";
+            Object.assign(clickTarget.style, {
+                position: "absolute",
+                left: `${INPUT_ROW_LEFT_SAFE_ZONE}px`,
+                top: "0",
+                width: `calc(var(--node-width) - ${
+                    INPUT_ROW_LEFT_SAFE_ZONE + INPUT_ROW_RIGHT_SAFE_ZONE
+                }px)`,
+                height: "100%",
+                zIndex: "3",
+                cursor: "pointer",
+            });
+            slotElement.appendChild(clickTarget);
+            bindNodes2RowClick(clickTarget);
+        }
+        clickTarget.__stringJoinToolsNode = node;
+        clickTarget.__stringJoinToolsInputIndex = inputIndex;
+    });
+}
+
+registerNodes2Adapter(TARGET_NODES, applyNodes2ToggleUI);
 
 function showQueuedSnapshotStatus(node) {
     const ui = node.__stringJoinToolsToggleUI;
@@ -494,6 +626,7 @@ function buildToggleControls(node) {
         {
             serialize: false,
             hideOnZoom: false,
+            getMinHeight: () => 72,
         },
     );
     domWidget.computeSize = (width) => [width, 72];
