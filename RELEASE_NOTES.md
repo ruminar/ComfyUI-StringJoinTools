@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.2.2
+
+### Nodes 2.0対応
+
+- Legacy Nodesとの互換性を維持しつつ、Nodes 2.0のDOM描画へ対応
+- Toggle String JoinおよびRuntime Toggle String Joinで、OFF入力行の紫色表示、ホバー表示、行クリックをNodes 2.0でも利用可能に変更
+- 入力側60px・出力側45pxのクリック安全領域と、5pxを超えるドラッグ時に切り替えない挙動を維持
+- Runtime Toggle String JoinおよびRuntime Text Inputの薄いアンバー背景をNodes 2.0でも表示
+- 内部保存ウィジェットをNodes 2.0の可視性管理に合わせて非表示化
+- 既存WorkflowのノードID、入出力、保存値を変更せず、従来のPython APIを維持
+
 ## 0.2.1
 
 ### Runtime Text Input
